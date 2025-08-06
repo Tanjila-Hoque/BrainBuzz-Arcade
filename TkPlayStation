@@ -1,0 +1,416 @@
+import tkinter as tk
+from tkinter import messagebox
+import random
+import copy
+import heapq
+
+# ----------------------
+# Game 1: Word Guessing
+# ----------------------
+def run_word_guessing():
+    word_dataset = [
+        "banana", "apple", "orange", "grapes", "mango", "peach", "lemon", "papaya",
+        "cherry", "guava", "pineapple", "watermelon", "blueberry", "strawberry",
+        "raspberry", "blackberry", "kiwi", "melon", "apricot", "coconut", "fig",
+        "pomegranate", "plum", "pear", "nectarine", "date", "lime", "tangerine",
+        "passionfruit", "cantaloupe", "avocado", "grapefruit", "jackfruit", "lychee",
+        "persimmon", "quince", "starfruit", "tomato", "carrot", "potato", "cabbage",
+        "lettuce", "spinach", "onion", "garlic", "broccoli", "cauliflower", "pepper",
+        "cucumber", "pumpkin", "zucchini", "radish", "celery", "turnip", "beet",
+        "corn", "peas", "beans", "cherry", "mushroom", "almond", "walnut", "cashew",
+        "hazelnut", "pecan", "pistachio", "basil", "thyme", "oregano", "mint",
+        "rosemary", "sage", "dill", "cinnamon", "clove", "vanilla", "ginger",
+        "saffron", "turmeric", "cumin", "cardamom", "nutmeg", "peppermint", "chocolate",
+        "honey", "sugar", "salt", "flour", "bread", "cheese", "butter", "milk",
+        "egg", "coffee", "tea", "water", "juice", "wine", "beer", "soda", "cake",
+        "cookie", "pie", "pasta", "rice", "soup", "salad", "steak", "chicken",
+        "fish", "shrimp", "crab", "lobster", "beef", "pork", "duck", "turkey",
+        "tofu", "beans", "lentils", "peas"
+    ]
+    letter_frequency = "etaoinshrdlucmfwypvbgkjqxz"
+
+    def start_game():
+        win = tk.Toplevel()
+        win.title("Word Guessing Game")
+        word = random.choice(word_dataset)
+        guessed, attempts = set(), [0]
+        max_attempts = 6
+
+        def display():
+            return " ".join([c if c in guessed else "_" for c in word])
+
+        def update():
+            label_word.config(text=display())
+            if all(c in guessed for c in word):
+                result.config(text="You won!")
+            elif attempts[0] >= max_attempts:
+                result.config(text=f"Game Over. Word was: {word}")
+
+        def guess():
+            l = entry.get().lower()
+            entry.delete(0, tk.END)
+            if l and l.isalpha() and l not in guessed:
+                guessed.add(l)
+                if l not in word:
+                    attempts[0] += 1
+            update()
+
+        def ai():
+            for l in letter_frequency:
+                if l not in guessed:
+                    tip.config(text=f"AI Suggestion: Try '{l.upper()}'")
+                    return
+
+        label_word = tk.Label(win, text=display(), font=("Arial", 24))
+        label_word.pack(pady=10)
+        entry = tk.Entry(win, font=("Arial", 14))
+        entry.pack()
+        tk.Button(win, text="Guess", command=guess).pack(pady=5)
+        tk.Button(win, text="AI Suggest", command=ai).pack()
+        tip = tk.Label(win, text="", fg="blue")
+        tip.pack()
+        result = tk.Label(win, text="", font=("Arial", 14))
+        result.pack()
+
+    start_game()
+
+# ----------------------------
+# Game 2: Rock Paper Scissors
+# ----------------------------
+def run_rps():
+    def start():
+        win = tk.Toplevel()
+        win.title("Rock Paper Scissors")
+        history = []
+        choices = ["Rock", "Paper", "Scissors"]
+
+        def ai():
+            if not history:
+                return random.choice(choices)
+            freq = {x: history.count(x) for x in choices}
+            pred = max(freq, key=freq.get)
+            counter = {"Rock": "Paper", "Paper": "Scissors", "Scissors": "Rock"}
+            return counter[pred]
+
+        def play(user):
+            history.append(user)
+            a = ai()
+            if user == a:
+                result.set("Draw")
+            elif (user == "Rock" and a == "Scissors") or (user == "Scissors" and a == "Paper") or (user == "Paper" and a == "Rock"):
+                result.set(f"You: {user}, AI: {a} \nYou Win!")
+            else:
+                result.set(f"You: {user}, AI: {a} \nAI Wins!")
+
+        result = tk.StringVar()
+        tk.Label(win, text="Choose:", font=("Arial", 14)).pack(pady=10)
+        for c in choices:
+            tk.Button(win, text=c, width=15, command=lambda x=c: play(x)).pack(pady=5)
+        tk.Label(win, textvariable=result, font=("Arial", 14)).pack(pady=10)
+
+    start()
+
+# ------------------------
+# Game 3: Puzzle Game (8)
+# ------------------------
+def run_puzzle():
+    goal = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
+
+    def start():
+        win = tk.Toplevel()
+        win.title("8 Puzzle Game")
+
+        def is_solvable(board):
+            flat = sum(board, [])
+            inv_count = 0
+            for i in range(len(flat)):
+                for j in range(i + 1, len(flat)):
+                    if flat[i] and flat[j] and flat[i] > flat[j]:
+                        inv_count += 1
+            return inv_count % 2 == 0
+
+        def shuffle_board():
+            board = sum(goal, [])
+            while True:
+                random.shuffle(board)
+                b = [board[i*3:(i+1)*3] for i in range(3)]
+                if is_solvable(b) and b != goal:
+                    return b
+
+        board = shuffle_board()
+        buttons = []
+
+        def render():
+            for i in range(3):
+                for j in range(3):
+                    val = board[i][j]
+                    buttons[i][j].config(text="" if val == 0 else str(val))
+
+        def find0():
+            for i in range(3):
+                for j in range(3):
+                    if board[i][j] == 0:
+                        return i, j
+
+        def click(i, j):
+            x, y = find0()
+            if abs(x - i) + abs(y - j) == 1:
+                board[x][y], board[i][j] = board[i][j], board[x][y]
+                render()
+                if board == goal:
+                    messagebox.showinfo("Success", "Puzzle Solved!")
+
+        def solve():
+            def h(s):
+                return sum(abs((s[i][j] - 1) // 3 - i) + abs((s[i][j] - 1) % 3 - j)
+                           for i in range(3) for j in range(3) if s[i][j])
+
+            heap = [(h(board), board, [])]
+            seen = set()
+
+            while heap:
+                _, state, path = heapq.heappop(heap)
+                t = tuple(map(tuple, state))
+                if t in seen:
+                    continue
+                seen.add(t)
+                if state == goal:
+                    path.append(state)
+                    animate(path)
+                    return
+                x, y = [(ix, iy) for ix in range(3) for iy in range(3) if state[ix][iy] == 0][0]
+                for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                    nx, ny = x + dx, y + dy
+                    if 0 <= nx < 3 and 0 <= ny < 3:
+                        new = copy.deepcopy(state)
+                        new[x][y], new[nx][ny] = new[nx][ny], new[x][y]
+                        heapq.heappush(heap, (len(path) + h(new), new, path + [state]))
+
+        def animate(path):
+            def step(i=0):
+                if i < len(path):
+                    for r in range(3):
+                        for c in range(3):
+                            board[r][c] = path[i][r][c]
+                    render()
+                    win.after(400, lambda: step(i + 1))
+            step()
+
+        for i in range(3):
+            row = []
+            for j in range(3):
+                b = tk.Button(win, font=("Arial", 24), width=4, height=2, command=lambda x=i, y=j: click(x, y))
+                b.grid(row=i, column=j)
+                row.append(b)
+            buttons.append(row)
+
+        render()
+        tk.Button(win, text="Solve AI", command=solve).grid(row=3, column=0, columnspan=3, pady=10)
+
+    start()
+
+# -------------------------
+# Game 4: Snake Game (Tkinter)
+# -------------------------
+def run_snake():
+    CELL_SIZE = 20
+    WIDTH = 400
+    HEIGHT = 400
+
+    class SnakeGame(tk.Toplevel):
+        def __init__(self):
+            super().__init__()
+            self.title("Snake Game")
+            self.resizable(False, False)
+            self.canvas = tk.Canvas(self, width=WIDTH, height=HEIGHT, bg="black")
+            self.canvas.pack()
+            self.direction = "Right"
+            self.snake = [(4, 10), (3, 10), (2, 10)]
+            self.food = None
+            self.score = 0
+            self.game_over = False
+            self.after_id = None
+
+            self.draw_score()
+            self.place_food()
+            self.draw_snake()
+            self.bind("<Key>", self.change_dir)
+            self.focus_set()
+            self.game_loop()
+
+        def draw_score(self):
+            self.score_text = self.canvas.create_text(50, 10, fill="white", text=f"Score: {self.score}", anchor="nw", font=("Arial", 14))
+
+        def place_food(self):
+            while True:
+                x = random.randint(0, (WIDTH // CELL_SIZE) - 1)
+                y = random.randint(0, (HEIGHT // CELL_SIZE) - 1)
+                if (x, y) not in self.snake:
+                    self.food = (x, y)
+                    break
+            self.draw_food()
+
+        def draw_food(self):
+            if hasattr(self, "food_obj"):
+                self.canvas.delete(self.food_obj)
+            x, y = self.food
+            self.food_obj = self.canvas.create_rectangle(
+                x * CELL_SIZE, y * CELL_SIZE,
+                (x + 1) * CELL_SIZE, (y + 1) * CELL_SIZE,
+                fill="red"
+            )
+
+        def draw_snake(self):
+            self.canvas.delete("snake")
+            for x, y in self.snake:
+                self.canvas.create_rectangle(
+                    x * CELL_SIZE, y * CELL_SIZE,
+                    (x + 1) * CELL_SIZE, (y + 1) * CELL_SIZE,
+                    fill="green", tag="snake"
+                )
+
+        def change_dir(self, event):
+            if event.keysym in ("Up", "Down", "Left", "Right"):
+                opposite = {"Up":"Down", "Down":"Up", "Left":"Right", "Right":"Left"}
+                if opposite[event.keysym] != self.direction:
+                    self.direction = event.keysym
+
+        def game_loop(self):
+            if self.game_over:
+                return
+            head_x, head_y = self.snake[0]
+            if self.direction == "Up":
+                head_y -= 1
+            elif self.direction == "Down":
+                head_y += 1
+            elif self.direction == "Left":
+                head_x -= 1
+            elif self.direction == "Right":
+                head_x += 1
+
+            if (head_x < 0 or head_x >= WIDTH // CELL_SIZE or
+                head_y < 0 or head_y >= HEIGHT // CELL_SIZE or
+                (head_x, head_y) in self.snake):
+                self.game_over = True
+                messagebox.showinfo("Game Over", f"Game Over! Your score was: {self.score}")
+                self.destroy()
+                return
+
+            self.snake.insert(0, (head_x, head_y))
+
+            if (head_x, head_y) == self.food:
+                self.score += 1
+                self.canvas.itemconfig(self.score_text, text=f"Score: {self.score}")
+                self.place_food()
+            else:
+                self.snake.pop()
+
+            self.draw_snake()
+            self.after_id = self.after(150, self.game_loop)
+
+    SnakeGame()
+
+# --------------------------------
+# -------------------------
+# Game 5: Number Guessing Game (Fixed Properly)
+# -------------------------
+def run_number_guess():
+    def start():
+        win = tk.Toplevel()
+        win.title("Number Guessing Game")
+        win.resizable(False, False)
+        number = random.randint(1, 100)
+        attempts = [0]
+
+        tk.Label(win, text="Guess a number between 1 and 100", font=("Arial", 14)).pack(pady=10)
+        entry = tk.Entry(win, font=("Arial", 14))
+        entry.pack()
+
+        result = tk.Label(win, text="", font=("Arial", 14))
+        result.pack(pady=10)
+
+        def guess():
+            val_str = entry.get().strip()
+            if not val_str.isdigit():  # Check valid integer
+                result.config(text="Please enter a valid integer.")
+                entry.delete(0, tk.END)
+                return
+            val = int(val_str)
+            attempts[0] += 1
+            if val < number:
+                result.config(text="Too low!")
+            elif val > number:
+                result.config(text="Too high!")
+            else:
+                messagebox.showinfo("Congratulations!", f"You guessed it in {attempts[0]} tries!")
+                win.destroy()
+            entry.delete(0, tk.END)
+
+        tk.Button(win, text="Guess", command=guess, width=15).pack(pady=5)
+
+    start()
+
+
+# ----------------------------
+# Game 6: Odd Even Guessing Game (Fixed Properly)
+# ----------------------------
+def run_odd_even():
+    numbers_dataset = [12, 7, 19, 24, 33, 42, 55, 68, 79, 80, 91, 100, 113, 128, 135]
+
+    def start():
+        win = tk.Toplevel()
+        win.title("Odd Even Guessing Game")
+        win.resizable(False, False)
+        number = random.choice(numbers_dataset)
+        attempts = [0]
+
+        tk.Label(win, text=f"Is the number {number} Odd or Even?", font=("Arial", 14)).pack(pady=10)
+        result = tk.Label(win, text="", font=("Arial", 14))
+        result.pack(pady=10)
+
+        def check_guess(user_choice):
+            attempts[0] += 1
+            correct = (number % 2 == 0 and user_choice == "Even") or (number % 2 == 1 and user_choice == "Odd")
+            if correct:
+                messagebox.showinfo("Correct!", f"Yes! {number} is {user_choice}. You guessed in {attempts[0]} tries.")
+                win.destroy()
+            else:
+                result.config(text="Wrong! Try Again.")
+
+        btn_frame = tk.Frame(win)
+        btn_frame.pack(pady=10)
+        tk.Button(btn_frame, text="Odd", width=10, command=lambda: check_guess("Odd")).pack(side="left", padx=10)
+        tk.Button(btn_frame, text="Even", width=10, command=lambda: check_guess("Even")).pack(side="left", padx=10)
+
+    start()
+
+
+# ----------------------
+# Main Launcher Interface
+# ----------------------
+def main():
+    root = tk.Tk()
+    root.title("All-in-One Game Launcher")
+    root.geometry("400x500")
+    root.resizable(False, False)
+    root.config(bg="#f0f4f8")
+
+    title = tk.Label(root, text="🎮 Game Launcher 🎮", font=("Arial", 24, "bold"), bg="#f0f4f8", fg="#34495e")
+    title.pack(pady=20)
+
+    btn_params = {"width": 25, "height": 2, "font": ("Arial", 14), "bg": "#2980b9", "fg": "white", "activebackground": "#3498db", "bd": 0}
+
+    tk.Button(root, text="Word Guessing", command=run_word_guessing, **btn_params).pack(pady=8)
+    tk.Button(root, text="Rock Paper Scissors", command=run_rps, **btn_params).pack(pady=8)
+    tk.Button(root, text="Puzzle Game (8-tile)", command=run_puzzle, **btn_params).pack(pady=8)
+    tk.Button(root, text="Snake Game", command=run_snake, **btn_params).pack(pady=8)
+    tk.Button(root, text="Number Guessing", command=run_number_guess, **btn_params).pack(pady=8)
+    tk.Button(root, text="Odd Even Guessing", command=run_odd_even, **btn_params).pack(pady=8)
+
+    footer = tk.Label(root, text="Enjoy your games! 😊", font=("Arial", 12), bg="#f0f4f8", fg="#480c4d")
+    footer.pack(side="bottom", pady=10)
+
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
